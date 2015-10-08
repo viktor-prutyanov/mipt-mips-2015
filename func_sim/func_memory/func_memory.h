@@ -12,6 +12,7 @@
 // Generic C++
 #include <string>
 #include <cassert>
+#include <map>
 
 // uArchSim modules
 #include <types.h>
@@ -19,11 +20,32 @@
 
 using namespace std;
 
+struct Addr
+{
+    uint64 setNum;
+    uint64 pageNum;
+    uint64 offset;
+};
+
 class FuncMemory
 {
     // You could not create the object
     // using this default constructor
     FuncMemory(){}
+
+    uint64 getSetNumByAddr( uint64 addr) const;
+    uint64 getPageNumByAddr( uint64 addr) const;
+    uint64 getOffsetByAddr( uint64 addr) const;
+    void splitAddr( uint64 addr, Addr *addrToSplit) const;
+
+    uint64 text_sect_start;
+
+    uint64 addr_bits;
+    uint64 set_num_bits;
+    uint64 page_num_bits;
+    uint64 offset_bits;
+
+    mutable map< uint64, map< uint64, map< uint64, uint8> > > mem;
 
 public:
 

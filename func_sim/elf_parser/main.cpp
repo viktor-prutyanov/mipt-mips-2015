@@ -1,4 +1,4 @@
-// Generci C
+// Generic C
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
