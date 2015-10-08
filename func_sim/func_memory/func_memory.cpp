@@ -6,14 +6,16 @@
  */
 
 // Generic C
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 // Generic C++
 
 // uArchSim modules
 #include <func_memory.h>
+
+#define DUMP_STR_LINE_SIZE 54
 
 FuncMemory::FuncMemory( const char* executable_file_name,
                         uint64 addr_size,
@@ -31,29 +33,25 @@ FuncMemory::FuncMemory( const char* executable_file_name,
 
     for ( unsigned int i = 0; i < sections_array.size(); ++i)
     {
-        //printf("{ %s\n", sections_array[i].name);
-        //printf("  start = %d (0x%x)\n", sections_array[i].start_addr, sections_array[i].start_addr);
-        //printf("  size = %d }\n", sections_array[i].size);
+        mem_bounds.push_back( make_pair( sections_array[i].start_addr, sections_array[i].size));
         for ( uint64 j = 0; j < sections_array[i].size; ++j)
         {
             Addr cur_addr;
             splitAddr( sections_array[i].start_addr + j, &cur_addr);
-            //printf("0x%.8x: 0x%.2x to [%d|%d|%d]\n", j, sections_array[i].content[j], cur_addr.setNum, cur_addr.pageNum, cur_addr.offset);
             mem[cur_addr.setNum][cur_addr.pageNum][cur_addr.offset] = sections_array[i].content[j];
         }
-        //printf("\n");
         if ( strcmp( sections_array[i].name, ".text") == 0)
         {
             text_sect_start = sections_array[i].start_addr;
             Addr text = {};
-            splitAddr(text_sect_start, &text);
+            splitAddr( text_sect_start, &text);
         }
     }
 }
 
 FuncMemory::~FuncMemory()
 {
-    // put your code here
+    // Nothing to do
 }
 
 uint64 FuncMemory::startPC() const
@@ -63,32 +61,47 @@ uint64 FuncMemory::startPC() const
 
 uint64 FuncMemory::read( uint64 addr, unsigned short num_of_bytes) const
 {
-    if (num_of_bytes == 0)
+    if ( num_of_bytes == 0)
     {
         abort();
     }
+
+    bool isBoundsErr = true;
+
+    for ( int i = 0; i < mem_bounds.size(); ++i)
+    {
+        if ( ( mem_bounds[i].first <= addr) && ( mem_bounds[i].second >= num_of_bytes))
+        {
+            isBoundsErr = false;
+            break;
+        }
+    }
+
+    if ( isBoundsErr)
+    {
+        abort();
+    }
+
     uint64 value = 0;
 
-    for (int i = 0; i < num_of_bytes; ++i)
+    for ( int i = 0; i < num_of_bytes; ++i)
     {
         Addr cur_addr;
         splitAddr( addr + i, &cur_addr);
 
         value |= ( ( uint64)( mem[cur_addr.setNum][cur_addr.pageNum][cur_addr.offset]) << ( i * 8));
-        //printf("{0x%x}\n", value);
     }
 
-    //printf("res: 0x%x\n", value);
     return value;
 }
 
 void FuncMemory::write( uint64 value, uint64 addr, unsigned short num_of_bytes)
 {
-    if (num_of_bytes == 0)
+    if ( num_of_bytes == 0)
     {
         abort();
     }
-    
+
     for ( int i = 0; i < num_of_bytes; ++i)
     {   
         Addr cur_addr;
@@ -96,11 +109,21 @@ void FuncMemory::write( uint64 value, uint64 addr, unsigned short num_of_bytes)
 
         mem[cur_addr.setNum][cur_addr.pageNum][cur_addr.offset] = ( value >> ( i * 8)) & 0xFF;
     }
+
+    mem_bounds.push_back( make_pair( addr, num_of_bytes));
 }
 
 string FuncMemory::dump( string indent) const
 {
-    return string("ERROR: You need to implement FuncMemory!");
+    char *str = new char[DUMP_STR_LINE_SIZE * mem_bounds.size() + 1];
+    for ( int i = 0; i < mem_bounds.size(); ++i)
+    {
+        sprintf( str + DUMP_STR_LINE_SIZE * i, "Bounds %.2d: start_addr = 0x%.8x, size = %10d\n", 
+            i, mem_bounds[i].first, mem_bounds[i].second);
+    }
+    string dump_str = string( str);
+    delete[] str;
+    return dump_str;
 }
 
 uint64 FuncMemory::getSetNumByAddr( uint64 addr) const

@@ -13,6 +13,7 @@
 #include <string>
 #include <cassert>
 #include <map>
+#include <utility>
 
 // uArchSim modules
 #include <types.h>
@@ -45,6 +46,7 @@ class FuncMemory
     uint64 page_num_bits;
     uint64 offset_bits;
 
+    vector< pair< uint64, uint64> > mem_bounds;
     mutable map< uint64, map< uint64, map< uint64, uint8> > > mem;
 
 public:
