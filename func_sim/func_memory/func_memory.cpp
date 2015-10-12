@@ -11,7 +11,9 @@
 #include <cstdio>
 #include <cstdlib>
 // Generic C++
-
+#include <string>
+#include <iostream>
+ #include <sstream>
 // uArchSim modules
 #include <func_memory.h>
 
@@ -115,15 +117,53 @@ void FuncMemory::write( uint64 value, uint64 addr, unsigned short num_of_bytes)
 
 string FuncMemory::dump( string indent) const
 {
-    char *str = new char[DUMP_STR_LINE_SIZE * mem_bounds.size() + 1];
-    for ( int i = 0; i < mem_bounds.size(); ++i)
+    // char *str = new char[DUMP_STR_LINE_SIZE * mem_bounds.size() + 1];
+    // for ( int i = 0; i < mem_bounds.size(); ++i)
+    // {
+    //     sprintf( str + DUMP_STR_LINE_SIZE * i, "Bounds %.2d: start_addr = 0x%.8x, size = %10d\n", 
+    //         i, mem_bounds[i].first, mem_bounds[i].second);
+    // }
+    // string dump_str = string( str);
+    // delete[] str;
+    // return dump_str;
+
+    ostringstream oss;
+
+    for ( size_t i = 0; i < mem_bounds.size(); ++i)
     {
-        sprintf( str + DUMP_STR_LINE_SIZE * i, "Bounds %.2d: start_addr = 0x%.8x, size = %10d\n", 
-            i, mem_bounds[i].first, mem_bounds[i].second);
+        oss << indent << "Dump FuncMemory bounds section #" << i << endl
+            << indent << "  size = " << mem_bounds[i].second << " Bytes" << endl
+            << indent << "  start_addr = 0x" << hex << mem_bounds[i].first << dec << endl
+            << indent << "  Content:" << endl;
+
+        char dump_data[sizeof( uint64) * 2];
+        bool skip_dump = false;
+        uint64 dump_num = 0;
+
+        for ( size_t j = 0; j < mem_bounds[i].second; j += 4)
+        {
+            dump_num = this->read( mem_bounds[i].first + j, 4);
+            if ( dump_num != 0)
+            {
+                skip_dump = false;
+            }
+            sprintf( dump_data, "%.8x", dump_num);
+            if (!skip_dump)
+            {
+                oss << indent << "    0x" << hex << mem_bounds[i].first + j 
+                    << ":    " << dump_data << dec << endl;
+                if ( dump_num == 0)
+                {
+                    skip_dump = true;
+                    oss << indent << "  ....  " << endl;
+                }
+            }
+        } 
+
+        oss << endl;
     }
-    string dump_str = string( str);
-    delete[] str;
-    return dump_str;
+
+    return oss.str();
 }
 
 uint64 FuncMemory::getSetNumByAddr( uint64 addr) const
