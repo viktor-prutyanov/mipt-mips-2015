@@ -13,7 +13,7 @@
 // Generic C++
 #include <string>
 #include <iostream>
- #include <sstream>
+#include <sstream>
 // uArchSim modules
 #include <func_memory.h>
 
@@ -148,7 +148,7 @@ string FuncMemory::dump( string indent) const
                 skip_dump = false;
             }
             sprintf( dump_data, "%.8x", dump_num);
-            if (!skip_dump)
+            if ( !skip_dump)
             {
                 oss << indent << "    0x" << hex << mem_bounds[i].first + j 
                     << ":    " << dump_data << dec << endl;
