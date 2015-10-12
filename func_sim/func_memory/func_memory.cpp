@@ -17,8 +17,6 @@
 // uArchSim modules
 #include <func_memory.h>
 
-#define DUMP_STR_LINE_SIZE 54
-
 FuncMemory::FuncMemory( const char* executable_file_name,
                         uint64 addr_size,
                         uint64 page_bits,
@@ -117,16 +115,6 @@ void FuncMemory::write( uint64 value, uint64 addr, unsigned short num_of_bytes)
 
 string FuncMemory::dump( string indent) const
 {
-    // char *str = new char[DUMP_STR_LINE_SIZE * mem_bounds.size() + 1];
-    // for ( int i = 0; i < mem_bounds.size(); ++i)
-    // {
-    //     sprintf( str + DUMP_STR_LINE_SIZE * i, "Bounds %.2d: start_addr = 0x%.8x, size = %10d\n", 
-    //         i, mem_bounds[i].first, mem_bounds[i].second);
-    // }
-    // string dump_str = string( str);
-    // delete[] str;
-    // return dump_str;
-
     ostringstream oss;
 
     for ( size_t i = 0; i < mem_bounds.size(); ++i)
