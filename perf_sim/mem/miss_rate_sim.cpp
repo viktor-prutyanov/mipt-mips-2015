@@ -23,12 +23,12 @@ int main( int argc, char** argv)
 
     std::ifstream in_stream;
 
-    for ( unsigned int ways_num = 0; ways_num <= 16; ways_num <<= 1)
+    for ( unsigned int ways_num = 0; ways_num <= 16; ways_num = ( ways_num == 0) ? 1 : (ways_num << 1))
     {
         //std::cerr << "ways=" << ways_num << "\n";
         out_stream << ways_num  << " way(s),";
 
-        for ( unsigned long int size = 1024; size <= 1024*1024; size <<= 1)
+        for ( unsigned long int size = 1024; size <= 1024 * 1024; size <<= 1)
         {
             //std::cerr << "size=" << size << " ways=" << ways_num << "\n";
             CacheTagArray cacheTagArray( size, ways_num, BLOCK_SIZE, ADDR_SIZE);

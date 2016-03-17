@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <deque>
@@ -22,7 +23,11 @@ CacheTagArray::CacheTagArray(
     {
         tag_array_len = size_in_bytes / block_size_in_bytes; 
         set_width = 0;
-        tag_array.resize( tag_array_len, 0);
+        tag_array = std::vector<uint64>(tag_array_len, 0);
+        //std::fill( tag_array.begin(), tag_array.begin() + tag_array_len, 0);
+        mru_bits = std::vector<bool>(tag_array_len, false);
+        //std::fill( mru_bits.begin(), mru_bits.begin() + tag_array_len, false);
+        mru_bits_num = 0;
     }
     else
     {
@@ -35,13 +40,13 @@ CacheTagArray::CacheTagArray(
             for ( uint64 set = 0; set < tag_array_len; ++set)
                 way_deqs[set].push_back( way); 
         
-        std::fill(tag_arrays, tag_arrays + ways, std::vector<uint64>(tag_array_len));
+        std::fill( tag_arrays, tag_arrays + ways, std::vector<uint64>(tag_array_len));
     }
 }
 
 CacheTagArray::~CacheTagArray()
 {
-    if (!is_fully)
+    if ( !is_fully)
     {
         delete[] tag_arrays;
         delete[] way_deqs;
@@ -78,13 +83,17 @@ bool CacheTagArray::read( uint64 addr)
     {
         uint64 tag = getTag( addr);
 
-        std::deque<uint64>::iterator it;
-        for ( it = tag_array.begin(); it != tag_array.end(); ++it)
+        for ( size_t i = 0; i < tag_array_len; ++i)
         {
-            if ( *it == tag)
+            if ( tag_array[i] == tag)
             {
-                tag_array.erase( it);
-                tag_array.push_back( tag);
+                if ( mru_bits_num + 1 == tag_array_len) 
+                {
+                    mru_bits_num = 0;
+                    std::fill( mru_bits.begin(), mru_bits.begin() + tag_array_len, false);
+                }
+                mru_bits[i] = true;
+                ++mru_bits_num; 
                 return true;
             }
         }
@@ -123,8 +132,21 @@ void CacheTagArray::write( uint64 addr)
 {
     if ( is_fully)
     {
-        tag_array.pop_front();
-        tag_array.push_back( getTag(addr));
+        for ( size_t i = 0; i < tag_array_len; ++i)
+        {
+            if ( !mru_bits[i])
+            {
+                tag_array[i] = getTag( addr);
+                if ( mru_bits_num + 1 == tag_array_len) 
+                {
+                    mru_bits_num = 0;
+                    std::fill( mru_bits.begin(), mru_bits.begin() + tag_array_len, false);
+                }
+                mru_bits[i] = true;
+                ++mru_bits_num;
+                return;
+            }
+        }
     }
     else
     {

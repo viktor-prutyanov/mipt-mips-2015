@@ -36,7 +36,9 @@ private:
 
     std::vector<uint64>* tag_arrays;
     std::deque<unsigned int>* way_deqs;
-    std::deque<uint64> tag_array; //only for fully-associative cache
+    std::vector<uint64> tag_array; //only for fully-associative cache
+    std::vector<bool> mru_bits; //only for fiully-associative cache
+    uint64 mru_bits_num; 
 };
 
 #endif //CACHE_TAG_ARRAY_H

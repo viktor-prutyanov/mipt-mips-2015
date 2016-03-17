@@ -5,7 +5,7 @@ vpath %.cpp $(TRUNK)/mem/
 
 INCL= -I ./ -I $(TRUNK)/common/
 
-CFLAGS= -O3 -Wall
+CFLAGS= -O4 -Wall
 
 miss_rate_sim: cache_tag_array.o miss_rate_sim.o
 	$(CXX) -o $@ $^
