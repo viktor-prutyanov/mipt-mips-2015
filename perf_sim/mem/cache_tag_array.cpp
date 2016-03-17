@@ -1,12 +1,13 @@
 #include <cassert>
 
+#include <algorithm>
 #include <vector>
 #include <deque>
 
 #include <cache_tag_array.h>
 
 CacheTagArray::CacheTagArray(
-    unsigned int size_in_bytes,
+    unsigned long int size_in_bytes,
     unsigned int ways,
     unsigned short block_size_in_bytes,
     unsigned short addr_size_in_bits)
@@ -21,6 +22,7 @@ CacheTagArray::CacheTagArray(
     {
         tag_array_len = size_in_bytes / block_size_in_bytes; 
         set_width = 0;
+        tag_array.resize( tag_array_len, 0);
     }
     else
     {
@@ -31,14 +33,19 @@ CacheTagArray::CacheTagArray(
 
         for ( unsigned int way = 0; way < ways; ++way)
             for ( uint64 set = 0; set < tag_array_len; ++set)
-                way_deqs[set].push_back( way);
+                way_deqs[set].push_back( way); 
+        
+        std::fill(tag_arrays, tag_arrays + ways, std::vector<uint64>(tag_array_len));
     }
 }
 
 CacheTagArray::~CacheTagArray()
 {
-    delete[] way_deqs;
-    delete[] tag_arrays;
+    if (!is_fully)
+    {
+        delete[] tag_arrays;
+        delete[] way_deqs;
+    }
 }
 
 unsigned int CacheTagArray::log2( unsigned int x) const
@@ -69,16 +76,29 @@ bool CacheTagArray::read( uint64 addr)
 {
     if ( is_fully)
     {
+        uint64 tag = getTag( addr);
 
+        std::deque<uint64>::iterator it;
+        for ( it = tag_array.begin(); it != tag_array.end(); ++it)
+        {
+            if ( *it == tag)
+            {
+                tag_array.erase( it);
+                tag_array.push_back( tag);
+                return true;
+            }
+        }
+
+        return false;
     }
     else
     {
         uint64 tag = getTag( addr);
         uint64 set = getSet( addr);
 
-        for (unsigned int way = 0; way < ways; ++way)
+        for ( unsigned int way = 0; way < ways; ++way)
         {
-            if (tag_arrays[way][set] == tag)
+            if ( tag_arrays[way][set] == tag)
             {
                 std::deque<unsigned int>::iterator it;
                 for ( it = way_deqs[set].begin(); it != way_deqs[set].end(); ++it)
@@ -86,11 +106,11 @@ bool CacheTagArray::read( uint64 addr)
                     if ( *it == way)
                     {
                         way_deqs[set].erase( it);
-                        way_deqs[set].push_front( way);
+                        way_deqs[set].push_back( way);
                         break;
                     }
                 }
-
+                
                 return true;
             }
         }
@@ -103,16 +123,17 @@ void CacheTagArray::write( uint64 addr)
 {
     if ( is_fully)
     {
-
+        tag_array.pop_front();
+        tag_array.push_back( getTag(addr));
     }
     else
     {
         uint64 tag = getTag( addr);
         uint64 set = getSet( addr);
         
-        unsigned int way = way_deqs[set][0];
-        way_deqs[set].pop_back();
-        way_deqs[set].push_front( way); 
+        unsigned int way = way_deqs[set].front();
+        way_deqs[set].pop_front();
+        way_deqs[set].push_back( way); 
         
         tag_arrays[way][set] = tag;
     }

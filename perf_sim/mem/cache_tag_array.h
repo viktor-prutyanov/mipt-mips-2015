@@ -10,7 +10,7 @@ class CacheTagArray
 {
 public:
     CacheTagArray( 
-        unsigned int size_in_bytes,
+        unsigned long int size_in_bytes,
         unsigned int ways,
         unsigned short block_size_in_bytes, 
         unsigned short addr_size_in_bits);
@@ -36,6 +36,7 @@ private:
 
     std::vector<uint64>* tag_arrays;
     std::deque<unsigned int>* way_deqs;
+    std::deque<uint64> tag_array; //only for fully-associative cache
 };
 
 #endif //CACHE_TAG_ARRAY_H
