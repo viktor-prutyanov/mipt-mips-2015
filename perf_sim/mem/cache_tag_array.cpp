@@ -89,11 +89,12 @@ bool CacheTagArray::read( uint64 addr)
             {
                 if ( mru_bits_num + 1 == tag_array_len) 
                 {
-                    mru_bits_num = 0;
+                    mru_bits_num = 1;
                     std::fill( mru_bits.begin(), mru_bits.begin() + tag_array_len, false);
                 }
+                else if (!mru_bits[i])
+                    ++mru_bits_num;
                 mru_bits[i] = true;
-                ++mru_bits_num; 
                 return true;
             }
         }
